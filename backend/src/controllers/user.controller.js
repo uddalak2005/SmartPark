@@ -5,7 +5,7 @@ class UserController {
 
     async registerUser(req, res) {
         try {
-
+            console.log("REQ BODY =>", JSON.stringify(req.body, null, 2));
             const schema = Joi.object({
                 userId: Joi.string().required(),
                 name: Joi.string().min(2).max(50).required(),
@@ -14,7 +14,7 @@ class UserController {
                     .pattern(/^[6-9]\d{9}$/)
                     .required()
                     .messages({ "string.pattern.base": "Invalid Indian phone number" }),
-                password: Joi.string().min(4).required(),
+                password: Joi.string().min(4).optional().allow("").empty(""),
                 role: Joi.string().valid("driver", "host", "admin").default("driver"),
                 plateNumber: Joi.string().optional(),
                 vehicleType: Joi.string().valid("car", "bike").optional(),
@@ -28,7 +28,10 @@ class UserController {
                 maxPricePerHour: Joi.number().min(10).max(500).optional(),
             });
 
-            const { error, value } = schema.validate(req.body, { abortEarly: false });
+            const { error, value } = schema.validate(req.body);
+
+            console.log(error);
+
             if (error) {
                 return res.status(400).json({
                     success: false,
@@ -36,6 +39,8 @@ class UserController {
                     errors: error.details.map((err) => err.message),
                 });
             }
+
+            console.log(value);
 
             // Log upload status: whether a file was received and basic non-secret metadata
             if (req.file) {
@@ -52,6 +57,7 @@ class UserController {
             }
 
             const user = new User({
+                userId: value.userId,
                 name: value.name,
                 email: value.email,
                 phone: value.phone,
@@ -78,6 +84,34 @@ class UserController {
                 user,
             });
         } catch (err) {
+            console.error("Error registering user:", err);
+            res.status(500).json({
+                success: false,
+                message: "Server error",
+                error: err.message,
+            });
+        }
+    }
+
+    async login(req, res) {
+        try {
+            const { firebaseId } = req.params;
+
+            const user = await User.findOne({ userId: firebaseId });
+
+            if (!user) {
+                console.log("User not found");
+                res.status(500).json({
+                    success: false,
+                    message: "User not found",
+                });
+            }
+
+            return res.status(200).json({
+                user
+            });
+        } catch (err) {
+            console.log(err.message);
             console.error("Error registering user:", err);
             res.status(500).json({
                 success: false,

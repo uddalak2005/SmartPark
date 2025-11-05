@@ -2,6 +2,10 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
     {
+        userId: {
+            type: String,
+            trim: true,
+        },
         name: {
             type: String,
             required: [true, "Name is required"],
@@ -25,7 +29,6 @@ const userSchema = new mongoose.Schema(
 
         password: {
             type: String,
-            required: true,
             minlength: 4, // keep it short for hackathon testing
         },
 
