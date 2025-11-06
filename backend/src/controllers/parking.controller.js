@@ -5,7 +5,7 @@ import Joi from "joi";
 class ParkingController {
     async createParkingSpace(req, res) {
         try {
-            // ✅ 1. Validate incoming data
+            // 1. Validate incoming data
             const schema = Joi.object({
                 ownerId: Joi.string().optional(),
                 title: Joi.string().required(),
@@ -32,19 +32,19 @@ class ParkingController {
                 });
             }
 
-            // ✅ 2. Normalize supported vehicle types
+            // 2. Normalize supported vehicle types
             const vehicleTypes =
                 typeof value.supportedVehicleTypes === "string"
                     ? value.supportedVehicleTypes.split(",").map((v) => v.trim())
                     : value.supportedVehicleTypes;
 
-            // ✅ 3. Handle uploaded photos (Cloudinary or Multer)
+            // 3. Handle uploaded photos (Cloudinary or Multer)
             const photoUrls = req.files?.map((file) => file.path) || [];
 
-            // ✅ 4. Determine ownership type
+            // 4. Determine ownership type
             const isUserOwned = Boolean(value.ownerId);
 
-            // ✅ 5. Create GeoJSON location object
+            // 5. Create GeoJSON location object
             const location = {
                 type: "Point",
                 coordinates: [value.lon, value.lat], // GeoJSON = [longitude, latitude]
@@ -52,7 +52,7 @@ class ParkingController {
                 landmark: value.landmark,
             };
 
-            // ✅ 6. Create parking space
+            // 6. Create parking space
             const parkingSpace = await ParkingSpace.create({
                 ownerType: isUserOwned ? "user" : "platform",
                 owner: isUserOwned ? value.ownerId : null,
@@ -71,7 +71,7 @@ class ParkingController {
                 isVerified: !isUserOwned,
             });
 
-            // ✅ 7. Send success response
+            // 7. Send success response
             return res.status(201).json({
                 success: true,
                 message: "Parking space created successfully",
@@ -170,7 +170,7 @@ class ParkingController {
             const latitude = parseFloat(lat);
             const longitude = parseFloat(lon);
 
-            // 🔍 Step 1: Find nearby parking spaces using GeoJSON
+            // Step 1: Find nearby parking spaces using GeoJSON
             const nearbySpaces = await ParkingSpace.aggregate([
                 {
                     $geoNear: {
@@ -181,7 +181,7 @@ class ParkingController {
                     },
                 },
                 {
-                    $match: { availableSlots: { $gt: 0 } }, // ✅ only spaces with free slots
+                    $match: { availableSlots: { $gt: 0 } }, // only spaces with free slots
                 },
                 {
                     $lookup: {
@@ -197,7 +197,7 @@ class ParkingController {
                             $filter: {
                                 input: "$slotDetails",
                                 as: "slot",
-                                cond: { $eq: ["$$slot.status", "available"] }, // ✅ only available slots
+                                cond: { $eq: ["$$slot.status", "available"] }, // only available slots
                             },
                         },
                     },

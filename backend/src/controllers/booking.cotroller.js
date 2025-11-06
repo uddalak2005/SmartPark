@@ -117,6 +117,111 @@ class BookingController {
             });
         }
     }
+
+    async startParkingSession(req, res) {
+        try {
+            const { bookingToken } = req.body || req.headers;
+
+            if (!bookingToken) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Booking token is required to start parking session",
+                });
+            }
+
+            // Verify the booking token
+            let decoded;
+            try {
+                decoded = jwt.verify(bookingToken, process.env.BOOKING_SECRET);
+            } catch (err) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Invalid or expired booking token",
+                });
+            }
+
+            const { bookingId, userId, zoneId, slotId, ETA } = decoded;
+
+            // Fetch booking session
+            const bookingSession = await BookingSession.findById(bookingId)
+                .populate("slot")
+                .populate("parkingSpace");
+
+            if (!bookingSession)
+                return res.status(404).json({
+                    success: false,
+                    message: "Booking session not found",
+                });
+
+            if (bookingSession.status !== "active") {
+                return res.status(400).json({
+                    success: false,
+                    message: "This booking cannot be started (already used or cancelled)",
+                });
+            }
+
+            // Mark slot as occupied
+            const slot = await ParkingSlot.findById(slotId);
+            if (!slot)
+                return res.status(404).json({
+                    success: false,
+                    message: "Slot not found",
+                });
+
+            slot.status = "occupied";
+            slot.currentVehicle = {
+                user: userId,
+                checkInTime: new Date(),
+            };
+            await slot.save();
+
+            // Update booking session
+            bookingSession.status = "ongoing";
+            bookingSession.checkInTime = new Date();
+
+            // Generate parking token (for billing session)
+            const parkingTokenPayload = {
+                bookingId,
+                userId,
+                zoneId,
+                slotId,
+                startTime: bookingSession.checkInTime,
+            };
+
+            const parkingToken = jwt.sign(parkingTokenPayload, process.env.PARKING_SECRET, {
+                expiresIn: "6h", // valid for parking duration
+            });
+
+            bookingSession.parkingToken = parkingToken;
+            await bookingSession.save();
+
+            // Update parking space available slot count
+            await ParkingSpace.findByIdAndUpdate(zoneId, {
+                $inc: { availableSlots: -1 },
+            });
+
+            return res.status(200).json({
+                success: true,
+                message: "Parking session started successfully",
+                data: {
+                    bookingId,
+                    slotId,
+                    zoneId,
+                    checkInTime: bookingSession.checkInTime,
+                    parkingToken,
+                },
+            });
+        } catch (err) {
+            console.error("Error starting parking session:", err);
+            res.status(500).json({
+                success: false,
+                message: "Server error while starting parking session",
+                error: err.message,
+            });
+        }
+    }
+
+
 }
 
 const bookingController = new BookingController();
