@@ -5,6 +5,6 @@ import upload from "../middleware/multer.middleware.js";
 const router = express.Router();
 
 router.post("/register", upload.single("vehiclePhoto"), userController.registerUser);
-router.post("/login", userController.login);
+router.post("/login/:firebaseId", (req,res,next) => {console.log(req); return next()}, userController.login);
 
 export default router;

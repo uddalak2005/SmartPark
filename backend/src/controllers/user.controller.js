@@ -96,9 +96,9 @@ class UserController {
     async login(req, res) {
         try {
             const { firebaseId } = req.params;
-
             const user = await User.findOne({ userId: firebaseId });
-
+            console.log(user);
+            
             if (!user) {
                 console.log("User not found");
                 res.status(500).json({
