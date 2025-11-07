@@ -22,7 +22,7 @@ const Landing = () => {
     navigate("/dashboard");
   } else {
     console.log("No user is signed in.");
-    navigate("/auth");
+    navigate("/");
   }
 });
 

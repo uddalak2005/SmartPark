@@ -58,6 +58,33 @@ const Dashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  function convertTimeToISO(timeStr: string) {
+  const now = new Date(); // today's date
+
+  // match "HH:MM AM" or "HH:MMAM" — flexible spacing and case
+  const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) throw new Error(`Invalid time format: ${timeStr}`);
+
+  let [_, hh, mm, modifier] = match;
+  let hours = parseInt(hh, 10);
+  const minutes = parseInt(mm, 10);
+
+  // Convert 12-hour time → 24-hour
+  if (modifier.toUpperCase() === "PM" && hours < 12) hours += 12;
+  if (modifier.toUpperCase() === "AM" && hours === 12) hours = 0;
+
+  const dateWithTime = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    hours,
+    minutes,
+    0
+  );
+
+  return dateWithTime.toISOString();
+}
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -184,7 +211,7 @@ useEffect(() => {
               lat: directionsResponse.LatLong.end_lat ,
               lon: directionsResponse.LatLong.end_lng 
             },
-            ETA: directionsResponse.ETA,
+            ETA: convertTimeToISO(directionsResponse.ETA),
           };
 
         console.log(payload);
@@ -197,9 +224,6 @@ useEffect(() => {
           },
           body:JSON.stringify(payload)
         });
-        const text = await res.text();
-        console.log("Response status:", res.status);
-        console.log("Raw response text:", text);
         if(res.ok){
           const data = await res.json()
           console.log(data);
@@ -211,7 +235,7 @@ useEffect(() => {
     }
     console.log("Booking done!");
     localStorage.setItem("journeyDetails",JSON.stringify(directionsResponse));
-    // navigate("/session");
+    navigate("/session");
   }
 
   const mockZones = [
