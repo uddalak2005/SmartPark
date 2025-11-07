@@ -7,7 +7,7 @@ import BookingSession from "../models/booking.model.js";
 class BookingController {
     async bookParkingSlot(req, res) {
         try {
-
+            console.log(req.body);
             const schema = Joi.object({
                 userId: Joi.string().required(),
                 zoneId: Joi.string().required(),

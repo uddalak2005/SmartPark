@@ -5,10 +5,28 @@ import { MapPin, Zap, Shield, TrendingUp, ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import SignInModal from "@/components/auth/SignInModal";
 import SignUpModal from "@/components/auth/SignUpModal";
+import {onAuthStateChanged} from 'firebase/auth';
+import {auth} from "../utils/firebaseconfig"
+import { useNavigate } from "react-router-dom";
 
 const Landing = () => {
   const [showSignIn, setShowSignIn] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
+
+  const navigate = useNavigate();
+
+  onAuthStateChanged(auth, (user) => {
+  if (user) {
+    const uid = user.uid;
+    // console.log("User is logged in. UID:", uid);
+    navigate("/dashboard");
+  } else {
+    console.log("No user is signed in.");
+    navigate("/auth");
+  }
+});
+
+
 
   const features = [
     {

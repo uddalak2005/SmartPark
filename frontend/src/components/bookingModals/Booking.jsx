@@ -5,7 +5,7 @@ function Booking({zoneDetails, onConfirmBooking}) {
     <div className='flex-col h-full w-full bg-white p-6'>
         
         <h1 className='text-black text-lg mb-2'>
-        You are booking a slot at zone <strong>{zoneDetails.name}</strong>
+        You are booking a slot at zone <strong>{zoneDetails.title}</strong>
         </h1>
         
         <p className='text-gray-400 font-semibold text-sm mb-4'>
