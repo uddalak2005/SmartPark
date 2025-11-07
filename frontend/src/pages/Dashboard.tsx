@@ -173,10 +173,7 @@ useEffect(() => {
   const handleSlotBooking = async(zoneDetails : zoneDetails) => {
     try {
         setbookingConfirmedLoader(true);
-        const url = `${import.meta.env.VITE_LOCAL_BACKEND_URL}/booking/bookSlot`;
-        const request = {
-          method : 'POST',
-          body:JSON.stringify({
+        const payload = {
             userId: localStorage.getItem("userDataId"),
             zoneId: zoneDetails._id,
             departureLocation: { 
@@ -188,9 +185,21 @@ useEffect(() => {
               lon: directionsResponse.LatLong.end_lng 
             },
             ETA: directionsResponse.ETA,
-          })
-        }
-        const res = await fetch(url,request);
+          };
+
+        console.log(payload);
+
+        const url = `${import.meta.env.VITE_LOCAL_BACKEND_URL}/booking/bookSlot`;
+        const res = await fetch(url,{
+          method : 'POST',
+          headers: {
+            "Content-Type": "application/json",  // 👈 this line is essential
+          },
+          body:JSON.stringify(payload)
+        });
+        const text = await res.text();
+        console.log("Response status:", res.status);
+        console.log("Raw response text:", text);
         if(res.ok){
           const data = await res.json()
           console.log(data);
@@ -202,7 +211,7 @@ useEffect(() => {
     }
     console.log("Booking done!");
     localStorage.setItem("journeyDetails",JSON.stringify(directionsResponse));
-    navigate("/session");
+    // navigate("/session");
   }
 
   const mockZones = [
