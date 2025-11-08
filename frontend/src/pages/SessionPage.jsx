@@ -10,8 +10,8 @@ export const ManageSession = () => {
     const [decodedResult, setDecodedResult] = useState(null);
     const [bookingConfirmed,setbookingConfirmed] = useState(false);
     const [bookingData,setbookingData] = useState(null);
-
     const navigate = useNavigate();
+
 useEffect(() => 
   {
   const handleScanQR = async () => {
@@ -47,6 +47,8 @@ useEffect(() =>
             console.log("Booking confirmation:", data);
             alert("Booking confirmed!");
             setbookingData(data.data);
+            console.log("Parking Token: ", data.data.parkingToken);
+            localStorage.setItem("parkingToken",data.data.parkingToken);
             setbookingConfirmed(!bookingConfirmed);
           } catch (err) {
             console.error("Error confirming booking:", err);
@@ -66,9 +68,27 @@ useEffect(() =>
 handleScanQR();
 },[])
 
+  const clearParking = async(parkingToken) => {
+    try {
+        const res = await fetch(`${import.meta.env.VITE_LOCAL_BACKEND_URL}/booking/complete`,{
+          method: 'POST',
+          headers : {
+                "Content-Type": "application/json",
+              },
+          body:JSON.stringify({parkingToken})
+        })
+        if(res.ok){
+          const data = await res.json();
+          console.log("Slot clearing done");
+        }
+    } catch (error) {
+        console.log(error);
+    }
+  };
+  
   const Razorpay = useRazorpay(); // ✅ hook used correctly inside component
   
-    const handlePayment = async (bookingToken,amount) => {
+  const handlePayment = async (bookingToken,amount) => {
       try {
         const res = await fetch(
           `${import.meta.env.VITE_LOCAL_BACKEND_URL}/payments/generateUTR`,
@@ -112,19 +132,21 @@ handleScanQR();
       } catch (err) {
         console.error("Error in Razorpay:", err);
       }
-    };
+  };
   
-
-const endSession = (elapsedSeconds) => {
+  const endSession = (elapsedSeconds) => {
   console.log("Session ended");
   const bookingToken = localStorage.getItem("bookingToken");
   console.log("Booking token: ", bookingToken);
   console.log("Amount: ", Math.ceil(elapsedSeconds*0.011));
+  const parkingToken = localStorage.getItem("parkingToken");
+  console.log("Parking token: ", parkingToken);
   handlePayment(bookingToken,Math.ceil(elapsedSeconds*0.011));
   localStorage.removeItem("bookingToken");
   localStorage.removeItem("journeyDetails");
-   navigate("/dashboard"); 
-}
+  clearParking(parkingToken);
+  navigate("/dashboard"); 
+  };
 
 return(
   <div id="qr-reader" className="flex flex-col items-center justify-center px-4">
@@ -141,4 +163,4 @@ return(
       }
     </div>
 )
-}
+};

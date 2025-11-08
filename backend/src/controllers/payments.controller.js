@@ -67,7 +67,7 @@ class PaymentsController {
 
             // Create Razorpay order
             const options = {
-                amount: amount, // amount in paise
+                amount: amount*100, // amount in paise
                 currency: "INR",
                 receipt: `receipt_${Date.now()}`,
                 notes: {
