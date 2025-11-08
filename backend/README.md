@@ -223,6 +223,48 @@ Errors:
 
 ---
 
+# POST /booking/cancelSession
+
+### Overview
+Cancel an active booking session before it begins and release the reserved parking slot.  
+This endpoint invalidates the current booking, frees the slot, and updates the available slot count in the corresponding parking zone.
+
+---
+
+### Request
+
+- **Method:** `POST`  
+- **URL:** `/booking/cancelSession`  
+- **Content-Type:** `application/json`  
+- **Purpose:** Cancel a parking booking using a valid booking token.  
+- **Accepts:** `bookingToken` in the **request body** or **headers**.  
+
+---
+
+### Request Body Example
+
+```json
+{
+  "bookingToken": "<JWT from booking response>"
+}
+
+```
+
+
+```
+Successful Response (200)
+{
+  "success": true,
+  "message": "Booking session cancelled and deleted successfully",
+  "data": {
+    "bookingId": "<id>",
+    "slotId": "<id>",
+    "zoneId": "<id>"
+  }
+}
+```
+
+
 ## Notes & Recommendations
 
 - Files are uploaded using multer + Cloudinary; uploaded files are available on the controller as `req.file` (single) or `req.files` (array). The controllers store `file.path` (Cloudinary URL) in DB.

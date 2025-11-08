@@ -221,7 +221,85 @@ class BookingController {
         }
     }
 
+    async cancelBookingSession(req, res) {
+        try {
+            const { bookingToken } = req.body || req.headers;
 
+            if (!bookingToken) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Booking token is required to cancel the session",
+                });
+            }
+
+            // Verify booking token
+            let decoded;
+            try {
+                decoded = jwt.verify(bookingToken, process.env.BOOKING_SECRET);
+            } catch (err) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Invalid or expired booking token",
+                });
+            }
+
+            const { bookingId, zoneId, slotId } = decoded;
+
+            // Find booking session
+            const bookingSession = await BookingSession.findById(bookingId);
+            if (!bookingSession) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Booking session not found",
+                });
+            }
+
+            // Check if already cancelled or used
+            if (bookingSession.status !== "active") {
+                return res.status(400).json({
+                    success: false,
+                    message: "This booking cannot be cancelled (already used or cancelled)",
+                });
+            }
+
+            // Mark booking as cancelled before deletion
+            bookingSession.status = "cancelled";
+            await bookingSession.save();
+
+            // Free up the slot
+            const slot = await ParkingSlot.findById(slotId);
+            if (slot) {
+                slot.status = "available";
+                slot.currentVehicle = null;
+                await slot.save();
+            }
+
+            // Increase available slot count for the zone
+            await ParkingSpace.findByIdAndUpdate(zoneId, {
+                $inc: { availableSlots: 1 },
+            });
+
+            // Delete the booking session record
+            await BookingSession.findByIdAndDelete(bookingId);
+
+            return res.status(200).json({
+                success: true,
+                message: "Booking session cancelled and deleted successfully",
+                data: {
+                    bookingId,
+                    slotId,
+                    zoneId,
+                },
+            });
+        } catch (err) {
+            console.error("Error cancelling booking session:", err);
+            res.status(500).json({
+                success: false,
+                message: "Server error while cancelling booking session",
+                error: err.message,
+            });
+        }
+    }
 }
 
 const bookingController = new BookingController();
