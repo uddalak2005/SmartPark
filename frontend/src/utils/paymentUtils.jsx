@@ -1,7 +1,8 @@
-import useRazorpay from "react-razorpay";
-const Razorpay = useRazorpay();
+import {useRazorpay} from "react-razorpay";
+
 
  export const handlePayment = async (bookingToken, amount) => {
+    const Razorpay = useRazorpay();
     try {
       const res = await fetch(`${import.meta.env.VITE_LOCAL_BACKEND_URL}/payment/generateUTR`, 
         { method: "POST" ,
