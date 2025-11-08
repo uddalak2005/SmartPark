@@ -88,30 +88,22 @@ const BookingStatusCard = ({ bookingData, onEndSession }) => {
 
             {/* --- Key Details Grid --- */}
             <div className="grid grid-cols-2 gap-4 border-t pt-4">
-                
-                {/* 1. Parking Token (Most Important) */}
-                <DetailItem 
-                    icon={Ticket} 
-                    label="Parking Token" 
-                    value={parkingToken || 'N/A'} 
-                    highlight={true}
-                />
 
-                {/* 2. Check-in Time */}
+                {/* 1. Check-in Time */}
                 <DetailItem 
                     icon={Clock} 
                     label="Check-in Time" 
                     value={formatCheckIn(checkInTime)}
                 />
 
-                {/* 3. Booking ID */}
+                {/* 2. Booking ID */}
                 <DetailItem 
                     icon={Hash} 
                     label="Booking ID" 
                     value={bookingId ? bookingId.slice(-6) : 'N/A'} // Show last 6 chars
                 />
                 
-                {/* 4. Slot & Zone */}
+                {/* 3. Slot & Zone */}
                 <DetailItem 
                     icon={MapPin} 
                     label="Location" 

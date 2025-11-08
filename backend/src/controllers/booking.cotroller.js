@@ -120,6 +120,7 @@ class BookingController {
 
     async startParkingSession(req, res) {
         try {
+            console.log(req.body);
             const { bookingToken } = req.body || req.headers;
 
             if (!bookingToken) {

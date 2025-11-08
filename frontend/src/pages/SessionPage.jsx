@@ -34,7 +34,12 @@ useEffect(() =>
           setScanning(false);
           // hit your backend route
           try {
-            const response = await fetch(`${decodedText}/booking/startSession`, { method: "POST" ,
+            console.log(localStorage.getItem("bookingToken"));
+            const response = await fetch(`${decodedText}/booking/startSession`, { 
+              method: "POST" ,
+              headers : {
+                "Content-Type": "application/json",
+              },
               body:JSON.stringify({bookingToken: localStorage.getItem("bookingToken")})
             });
             const data = await response.json();
