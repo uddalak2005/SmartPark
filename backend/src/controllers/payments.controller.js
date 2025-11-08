@@ -1,20 +1,31 @@
-import User from "../models/user.model.js";
-import Joi from "joi";
+import Razorpay from "razorpay";
 import jwt from "jsonwebtoken";
-import ParkingSpace from "../models/parkingSpaces.model.js";
-import ParkingSlot from "../models/parkingSlot.model.js";
 import BookingSession from "../models/booking.model.js";
 
 class PaymentsController {
+    constructor() {
+        this.razorpay = new Razorpay({
+            key_id: process.env.RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_KEY_SECRET,
+        });
+    }
 
     async generateUTR(req, res) {
         try {
-            const { bookingToken } = req.body || req.headers;
+            const { bookingToken, amount } = req.body || req.headers;
 
+            // Validate required fields
             if (!bookingToken) {
                 return res.status(400).json({
                     success: false,
-                    message: "Booking token is required to cancel the session",
+                    message: "Booking token is required.",
+                });
+            }
+
+            if (!amount) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Payment amount is required.",
                 });
             }
 
@@ -25,40 +36,57 @@ class PaymentsController {
             } catch (err) {
                 return res.status(401).json({
                     success: false,
-                    message: "Invalid or expired booking token",
+                    message: "Invalid or expired booking token.",
                 });
             }
 
-            const { bookingId, zoneId, slotId } = decoded;
+            const { bookingId } = decoded;
 
             // Find booking session
             const bookingSession = await BookingSession.findById(bookingId);
             if (!bookingSession) {
                 return res.status(404).json({
                     success: false,
-                    message: "Booking session not found",
+                    message: "Booking session not found.",
                 });
             }
 
-            // Check if already cancelled or used
+            // Ensure booking is still active
             if (bookingSession.status !== "ongoing") {
                 return res.status(400).json({
                     success: false,
-                    message: "This booking cannot be cancelled (already used or cancelled)",
+                    message: "This booking cannot be paid for (already used or cancelled).",
                 });
             }
 
-            return res.status(200).json({
-                order: {
-                    id: bookingId
-                }
-            });
+            // Create Razorpay order
+            const options = {
+                amount: amount, // amount in paise
+                currency: "INR",
+                receipt: `receipt_${Date.now()}`,
+                notes: {
+                    bookingId,
+                    userId: bookingSession.userId.toString(),
+                },
+            };
 
+            const order = await this.razorpay.orders.create(options);
+
+            // Optionally, you can attach the order ID to bookingSession for reference
+            bookingSession.paymentOrderId = order.id;
+            await bookingSession.save();
+
+            return res.status(200).json({
+                success: true,
+                message: "UTR (order) generated successfully.",
+                bookingId,
+                order,
+            });
         } catch (err) {
-            console.error("Error fetching UTR:", err);
-            res.status(500).json({
+            console.error("Error generating UTR:", err);
+            return res.status(500).json({
                 success: false,
-                message: "Server error while fetching UTR",
+                message: "Server error while generating UTR.",
                 error: err.message,
             });
         }
@@ -66,4 +94,4 @@ class PaymentsController {
 }
 
 const paymentsController = new PaymentsController();
-export default paymentsController; 
+export default paymentsController;
