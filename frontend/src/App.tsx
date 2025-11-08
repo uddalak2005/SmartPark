@@ -11,6 +11,7 @@ import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import RunningSession from "./pages/RunningSession"
 import {APIProvider} from '@vis.gl/react-google-maps';
+import {ManageSession} from "./pages/SessionPage"
 
 const queryClient = new QueryClient();
 
@@ -19,7 +20,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <APIProvider apiKey={'AIzaSyDfFS0GwdZ-E3pxaYa4CuvUMxgMXDf2g3g'} onLoad={() => console.log('Maps API has loaded.')}>
+      <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY} onLoad={() => console.log('Maps API has loaded.')}>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Landing />} />
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/dashboard/car" element={<CarDetails />} />
           <Route path="/dashboard/profile" element={<Profile />} />
           <Route path="/session" element={<RunningSession />} />
+          <Route path="/session-manage" element={<ManageSession />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
