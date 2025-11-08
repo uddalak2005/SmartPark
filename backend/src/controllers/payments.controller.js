@@ -3,16 +3,20 @@ import jwt from "jsonwebtoken";
 import BookingSession from "../models/booking.model.js";
 
 class PaymentsController {
-    constructor() {
-        this.razorpay = new Razorpay({
-            key_id: process.env.RAZORPAY_KEY_ID,
-            key_secret: process.env.RAZORPAY_KEY_SECRET,
-        });
-    }
 
     async generateUTR(req, res) {
         try {
+
+            console.log(process.env.RAZORPAY_KEY_ID);
+            console.log(process.env.RAZORPAY_KEY_SECRET);
+
+            const razorpay = new Razorpay({
+                key_id: process.env.RAZORPAY_KEY_ID,
+                key_secret: process.env.RAZORPAY_KEY_SECRET,
+            });
             const { bookingToken, amount } = req.body || req.headers;
+
+            console.log(amount);
 
             // Validate required fields
             if (!bookingToken) {
@@ -42,6 +46,8 @@ class PaymentsController {
 
             const { bookingId } = decoded;
 
+            console.log(bookingId);
+
             // Find booking session
             const bookingSession = await BookingSession.findById(bookingId);
             if (!bookingSession) {
@@ -66,11 +72,11 @@ class PaymentsController {
                 receipt: `receipt_${Date.now()}`,
                 notes: {
                     bookingId,
-                    userId: bookingSession.userId.toString(),
+                    userId: bookingSession.user.toString(),
                 },
             };
 
-            const order = await this.razorpay.orders.create(options);
+            const order = await razorpay.orders.create(options);
 
             // Optionally, you can attach the order ID to bookingSession for reference
             bookingSession.paymentOrderId = order.id;

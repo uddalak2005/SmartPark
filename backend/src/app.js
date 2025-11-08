@@ -3,7 +3,7 @@ import cors from "cors";
 import userRoutes from "./routes/user.routes.js";
 import parkingRoutes from "./routes/parking.routes.js";
 import bookingRoutes from "./routes/booking.routes.js";
-import paymentsRoutes from "./routes/parking.routes.js";
+import paymentsRoutes from "./routes/payments.routes.js";
 
 const app = express();
 
