@@ -104,6 +104,7 @@ export default function RunningSession() {
                                            text-base font-bold flex-grow p-3 
                                            transition-colors duration-200 
                                            hover:bg-red-50 hover:border-red-600 hover:text-red-600'
+                                onClick={()=>{navigate("/")}}
                                 >
                                     Cancel Booking
                                 </button>

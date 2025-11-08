@@ -114,7 +114,7 @@ const BookingStatusCard = ({ bookingData, onEndSession }) => {
             {/* --- Action Button --- */}
             <div className="mt-8">
                 <button 
-                    onClick={onEndSession(elapsedSeconds)}
+                    onClick={() => onEndSession(elapsedTime)}
                     className="w-full bg-red-600 text-white py-3 rounded-lg text-lg font-bold 
                                shadow-md hover:bg-red-700 transition-all"
                 >

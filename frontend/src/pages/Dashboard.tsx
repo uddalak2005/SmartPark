@@ -12,7 +12,6 @@ import {motion} from 'framer-motion';
 import {APIProvider, Map} from '@vis.gl/react-google-maps';
 import Booking from '../components/bookingModals/Booking'
 import DirectionsComponent from '../components/maps/DirectionComponent'
-import { setegid } from "process";
 
 const Dashboard = () => {
   interface zoneDetails {

@@ -1,59 +1,62 @@
-import {useRazorpay} from "react-razorpay";
+// PaymentSection.jsx
+import React from "react";
+import { useRazorpay } from "react-razorpay";
 
+export default function PaymentSection({ bookingToken, amount }) {
+  const Razorpay = useRazorpay(); // ✅ hook used correctly inside component
 
- export const handlePayment = async (bookingToken, amount) => {
-    const Razorpay = useRazorpay();
+  const handlePayment = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_LOCAL_BACKEND_URL}/payment/generateUTR`, 
-        { method: "POST" ,
-            body : JSON.stringify({
-                bookingToken : bookingToken
-            })
-        });
-        if(res.ok){
-            const data = await res.json();
-            const order = {
-                id: data.order.id, // example Razorpay order ID from backend
-                amount: amount, // in paise => ₹500
-                currency: "INR",
-            };
+      const res = await fetch(
+        `${import.meta.env.VITE_LOCAL_BACKEND_URL}/payment/generateUTR`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bookingToken }),
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to generate order");
+      const data = await res.json();
 
       const options = {
-        key: "rzp_test_YourKeyHere", // Replace with your Razorpay key
-        amount: order.amount,
-        currency: order.currency,
-        name: "FarmLoan AI", // Your app or company name
+        key: "rzp_test_YourKeyHere", // Replace with your key
+        amount,
+        currency: "INR",
+        name: "FarmLoan AI",
         description: "Test Transaction",
-        order_id: order.id,
-        // image: "https://your-logo-url.com/logo.png"
+        order_id: data.order.id,
         handler: (response) => {
-          console.log("Payment success:", response);
+          console.log("✅ Payment success:", response);
           alert(`Payment ID: ${response.razorpay_payment_id}`);
-          // You can verify the payment at your backend here
         },
         prefill: {
-          name: "Test user",
+          name: "Test User",
           email: "test@example.com",
           contact: "8910169299",
         },
-        notes: {
-          address: "React Developer Address",
-        },
-        theme: {
-          color: "#3399cc",
-        },
+        theme: { color: "#3399cc" },
       };
 
       const rzp1 = new Razorpay(options);
 
-      rzp1.on("payment.failed", function (response) {
-        console.error("Payment failed:", response.error);
+      rzp1.on("payment.failed", (response) => {
+        console.error("❌ Payment failed:", response.error);
         alert(`Payment failed: ${response.error.description}`);
       });
 
-      rzp1.open();
-    }
+      rzp1.open(); // 💸 Opens the payment modal
     } catch (err) {
       console.error("Error in Razorpay:", err);
     }
   };
+
+  return (
+    <button
+      onClick={handlePayment}
+      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+    >
+      Pay ₹{amount / 100}
+    </button>
+  );
+}

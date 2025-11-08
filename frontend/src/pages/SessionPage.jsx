@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useState } from "react";
 import BookingStatusCard from "../components/bookingModals/bookingStatusCard";
 import { useNavigate } from "react-router-dom";
-import { handlePayment } from "../utils/paymentUtils";
+import { useRazorpay } from "react-razorpay";
 
 export const ManageSession = () => {
     const [scanning, setScanning] = useState(false);
@@ -63,13 +63,60 @@ useEffect(() =>
     }
   };
 
-
-
 handleScanQR();
 },[])
 
+  const Razorpay = useRazorpay(); // ✅ hook used correctly inside component
+  
+    const handlePayment = async (bookingToken,amount) => {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_LOCAL_BACKEND_URL}/payment/generateUTR`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ bookingToken, amount }),
+          }
+        );
+  
+        if (!res.ok) throw new Error("Failed to generate order");
+        const data = await res.json();
+  
+        const options = {
+          key: "rzp_test_RdMEvDYXf39CSj", // Replace with your key
+          amount,
+          currency: "INR",
+          name: "FarmLoan AI",
+          description: "Test Transaction",
+          order_id: data.order.id,
+          handler: (response) => {
+            console.log("✅ Payment success:", response);
+            alert(`Payment ID: ${response.razorpay_payment_id}`);
+          },
+          prefill: {
+            name: "Test User",
+            email: "test@example.com",
+            contact: "8910169299",
+          },
+          theme: { color: "#3399cc" },
+        };
+  
+        const rzp1 = new Razorpay(options);
+  
+        rzp1.on("payment.failed", (response) => {
+          console.error("❌ Payment failed:", response.error);
+          alert(`Payment failed: ${response.error.description}`);
+        });
+  
+        rzp1.open(); // 💸 Opens the payment modal
+      } catch (err) {
+        console.error("Error in Razorpay:", err);
+      }
+    };
+  
+
 const endSession = (elapsedSeconds) => {
-  console.log("Session ended, razorpay to be integrated");
+  console.log("Session ended");
   const bookingToken = localStorage.getItem("bookingToken");
   handlePayment(bookingToken,elapsedSeconds*0.011);
   localStorage.removeItem("bookingToken");
