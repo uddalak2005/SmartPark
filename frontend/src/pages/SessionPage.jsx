@@ -71,7 +71,7 @@ handleScanQR();
     const handlePayment = async (bookingToken,amount) => {
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_LOCAL_BACKEND_URL}/payment/generateUTR`,
+          `${import.meta.env.VITE_LOCAL_BACKEND_URL}/payments/generateUTR`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -101,7 +101,7 @@ handleScanQR();
           theme: { color: "#3399cc" },
         };
   
-        const rzp1 = new Razorpay(options);
+        const rzp1 = new window.Razorpay(options);
   
         rzp1.on("payment.failed", (response) => {
           console.error("❌ Payment failed:", response.error);
@@ -118,7 +118,9 @@ handleScanQR();
 const endSession = (elapsedSeconds) => {
   console.log("Session ended");
   const bookingToken = localStorage.getItem("bookingToken");
-  handlePayment(bookingToken,elapsedSeconds*0.011);
+  console.log("Booking token: ", bookingToken);
+  console.log("Amount: ", Math.ceil(elapsedSeconds*0.011));
+  handlePayment(bookingToken,Math.ceil(elapsedSeconds*0.011));
   localStorage.removeItem("bookingToken");
   localStorage.removeItem("journeyDetails");
    navigate("/dashboard"); 
