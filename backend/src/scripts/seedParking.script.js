@@ -9,12 +9,12 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ✅ Load .env from project root
+// Load .env from project root
 dotenv.config({ path: path.join(__dirname, "../../.env") });
 
 const MONGO_URI = process.env.MONGO_URI;
 
-// 🗺️ Famous Kolkata locations
+// Famous Kolkata locations
 const locations = [
     {
         title: "Park Street City Center Parking",
@@ -61,12 +61,12 @@ const locations = [
 async function seedData() {
     try {
         await mongoose.connect(MONGO_URI);
-        console.log("✅ Connected to MongoDB");
+        console.log("Connected to MongoDB");
 
         // 🧹 Clean old data
         await ParkingSpace.deleteMany({});
         await ParkingSlot.deleteMany({});
-        console.log("🧹 Cleared existing parking data");
+        console.log("Cleared existing parking data");
 
         // 🔁 Loop through locations
         for (const loc of locations) {
@@ -75,8 +75,8 @@ async function seedData() {
                 title: loc.title,
                 description: loc.description,
                 location: {
-                    type: "Point", // ✅ GeoJSON format
-                    coordinates: [loc.coordinates.lon, loc.coordinates.lat], // ✅ [longitude, latitude]
+                    type: "Point", // GeoJSON format
+                    coordinates: [loc.coordinates.lon, loc.coordinates.lat], // longitude, latitude]
                     address: loc.address,
                     landmark: loc.landmark,
                 },
@@ -115,13 +115,13 @@ async function seedData() {
             parkingSpace.availableSlots = slotCount;
 
             await parkingSpace.save();
-            console.log(`🚗 Added ${slotCount} slots to "${loc.title}"`);
+            console.log(`Added ${slotCount} slots to "${loc.title}"`);
         }
 
-        console.log("🎉 Parking spaces seeded successfully!");
+        console.log("Parking spaces seeded successfully!");
         process.exit(0);
     } catch (err) {
-        console.error("❌ Error seeding data:", err);
+        console.error("Error seeding data:", err);
         process.exit(1);
     }
 }

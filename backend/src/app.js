@@ -2,7 +2,8 @@ import express from "express";
 import cors from "cors";
 import userRoutes from "./routes/user.routes.js";
 import parkingRoutes from "./routes/parking.routes.js";
-import bookingRoutes from "./routes/booking.routes.js"
+import bookingRoutes from "./routes/booking.routes.js";
+import paymentsRoutes from "./routes/parking.routes.js";
 
 const app = express();
 
@@ -20,5 +21,6 @@ app.get("/", (req, res) => {
 app.use("/user", userRoutes);
 app.use("/parking", parkingRoutes);
 app.use("/booking", bookingRoutes);
+app.use("/payments", paymentsRoutes);
 
 export default app;
