@@ -8,4 +8,5 @@ router.post("/create", upload.array("photos", 5), parkingController.createParkin
 router.post("/addSlot", parkingController.addParkingSlots);
 router.get("/getNearby", parkingController.getNearByParking);
 
+
 export default router;

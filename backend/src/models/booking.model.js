@@ -29,6 +29,7 @@ const bookingSessionSchema = new mongoose.Schema(
             default: "active",
         },
         bookingToken: String,
+        parkingToken: String
     },
     { timestamps: true }
 );

@@ -301,6 +301,102 @@ class BookingController {
             });
         }
     }
+
+    async completeParkingSession(req, res) {
+        try {
+            console.log(req.body);
+            const { parkingToken } = req.body || req.headers;
+
+            if (!parkingToken) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Parking token is required to complete the session",
+                });
+            }
+
+            // Verify the parking token
+            let decoded;
+            try {
+                decoded = jwt.verify(parkingToken, process.env.PARKING_SECRET);
+            } catch (err) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Invalid or expired parking token",
+                });
+            }
+
+            const { bookingId, userId, zoneId, slotId, startTime } = decoded;
+
+            // Fetch booking session
+            const bookingSession = await BookingSession.findById(bookingId)
+                .populate("slot")
+                .populate("parkingSpace");
+
+            if (!bookingSession)
+                return res.status(404).json({
+                    success: false,
+                    message: "Booking session not found",
+                });
+
+            if (bookingSession.status !== "ongoing") {
+                return res.status(400).json({
+                    success: false,
+                    message: "This booking cannot be completed (not ongoing)",
+                });
+            }
+
+            // Mark slot as free again
+            const slot = await ParkingSlot.findById(slotId);
+            if (!slot)
+                return res.status(404).json({
+                    success: false,
+                    message: "Slot not found",
+                });
+
+            slot.status = "available";
+            slot.currentVehicle = null;
+            await slot.save();
+
+            // Mark booking session as completed
+            bookingSession.status = "completed";
+            bookingSession.checkOutTime = new Date();
+
+            // Calculate duration and cost (example: ₹2 per minute)
+            const durationMs = new Date() - new Date(startTime);
+            const durationMins = Math.ceil(durationMs / 60000);
+            const ratePerMin = 2;
+            const totalCost = durationMins * ratePerMin;
+
+            bookingSession.billAmount = totalCost;
+            await bookingSession.save();
+
+            // Update available slot count
+            await ParkingSpace.findByIdAndUpdate(zoneId, {
+                $inc: { availableSlots: 1 },
+            });
+
+            // Optionally generate invoice or mark payment pending
+            return res.status(200).json({
+                success: true,
+                message: "Parking session completed successfully",
+                data: {
+                    bookingId,
+                    slotId,
+                    durationMins,
+                    totalCost,
+                    checkOutTime: bookingSession.checkOutTime,
+                },
+            });
+        } catch (err) {
+            console.error("Error completing parking session:", err);
+            res.status(500).json({
+                success: false,
+                message: "Server error while completing parking session",
+                error: err.message,
+            });
+        }
+    }
+
 }
 
 const bookingController = new BookingController();
