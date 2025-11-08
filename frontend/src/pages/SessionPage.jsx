@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useState } from "react";
 import BookingStatusCard from "../components/bookingModals/bookingStatusCard";
 import { useNavigate } from "react-router-dom";
+import { handlePayment } from "../utils/paymentUtils";
 
 export const ManageSession = () => {
     const [scanning, setScanning] = useState(false);
@@ -61,11 +62,18 @@ useEffect(() =>
       setScanning(false);
     }
   };
+
+
+
 handleScanQR();
 },[])
 
-const endSession = () => {
+const endSession = (elapsedSeconds) => {
   console.log("Session ended, razorpay to be integrated");
+  const bookingToken = localStorage.getItem("bookingToken");
+  handlePayment(bookingToken,elapsedSeconds*0.011);
+  localStorage.removeItem("bookingToken");
+  localStorage.removeItem("journeyDetails");
    navigate("/dashboard"); 
 }
 
@@ -80,7 +88,7 @@ return(
       )}
 
       {bookingConfirmed &&
-        <BookingStatusCard bookingData={bookingData} onEndSession={()=>endSession()}/>
+        <BookingStatusCard bookingData={bookingData} onEndSession={(elapsedSeconds)=>endSession(elapsedSeconds)}/>
       }
     </div>
 )

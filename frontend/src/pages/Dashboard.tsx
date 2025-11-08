@@ -7,11 +7,18 @@ import { Search, Navigation, MapPin, ArrowDown } from "lucide-react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+<<<<<<< Updated upstream
 import { motion } from "framer-motion";
 import { APIProvider, Map } from "@vis.gl/react-google-maps";
 import Booking from "../components/bookingModals/Booking";
 import DirectionsComponent from "../components/maps/DirectionComponent";
 import axios from "axios";
+=======
+import {motion} from 'framer-motion';
+import {Map} from '@vis.gl/react-google-maps';
+import Booking from '../components/bookingModals/Booking'
+import DirectionsComponent from '../components/maps/DirectionComponent'
+>>>>>>> Stashed changes
 
 const Dashboard = () => {
   interface zoneDetails {
@@ -224,8 +231,13 @@ const Dashboard = () => {
                   origin={directionRequest.origin}
                   destination={directionRequest.destination}
                 />
+<<<<<<< Updated upstream
               )}
             </Map>
+=======
+                }
+              </Map>
+>>>>>>> Stashed changes
           </div>
 
           {!showResults && (
