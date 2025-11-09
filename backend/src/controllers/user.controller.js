@@ -98,10 +98,10 @@ class UserController {
             const { firebaseId } = req.params;
             const user = await User.findOne({ userId: firebaseId });
             console.log(user);
-            
+
             if (!user) {
                 console.log("User not found");
-                res.status(500).json({
+                return res.status(500).json({
                     success: false,
                     message: "User not found",
                 });
