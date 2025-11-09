@@ -53,6 +53,8 @@ const Dashboard = () => {
   const [directionsResponse, setDirectionsResponse] = useState<directionsResponse | null>(null);
   const [nearbyParkingZones,setnearbyParkingZones] = useState(null);
   const [bookingConfirmedLoader,setbookingConfirmedLoader] = useState(false);
+  const [isPriority,setIsPriority] = useState(false);
+  const [likelihood,setlikelihood] = useState("");
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -105,15 +107,46 @@ const Dashboard = () => {
     }
   };
 
+  const getLikelihood = async () => {
+    const API_URL = "https://agentsay-volkswagen.hf.space/infer";
+
+    if (!destination) {
+        console.error("Destination is required for likelihood calculation.");
+        return;
+    }
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ target_place : "Alipore" }),
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setlikelihood(data.congestion_level);  
+        console.log("Likelihood data received:", data.congestion_level);
+    } catch (error) {
+        // Handle network errors or issues with the fetch/response
+        console.error("Error fetching likelihood:", error);
+        setlikelihood("Unknown"); 
+    }
+  }
+
   const getNearbyParkings = async(LatLng : LatLng) => {
     try {
+      setbookingConfirmedLoader(true);
       const url = `${import.meta.env.VITE_LOCAL_BACKEND_URL}/parking/getNearby?lat=${LatLng.end_lat}&lon=${LatLng.end_lng}`
       const res = await fetch(url,{method: 'GET'});
       if(res.ok){
         const data = await res.json();
         console.log(data);
+        const done = await getLikelihood();
         setnearbyParkingZones(data.data);
         }
+        setbookingConfirmedLoader(false);
     } catch (error) {
       console.log(error);
     }
@@ -198,7 +231,7 @@ useEffect(() => {
 
   const handleSlotBooking = async(zoneDetails : zoneDetails) => {
     try {
-        setbookingConfirmedLoader(true);
+        
         const payload = {
             userId: localStorage.getItem("userDataId"),
             zoneId: zoneDetails._id,
@@ -227,7 +260,6 @@ useEffect(() => {
           const data = await res.json()
           console.log(data);
           localStorage.setItem("bookingToken",data.data.bookingToken);
-          setbookingConfirmedLoader(false);
         }
     } catch (error) {
         console.log(error);
@@ -236,12 +268,6 @@ useEffect(() => {
     localStorage.setItem("journeyDetails",JSON.stringify(directionsResponse));
     navigate("/session");
   }
-
-  const mockZones = [
-    { zoneId: 1, name: "Central Plaza Parking", distance: "0.2 mi", price: "$5/hr", available: 12, uid: "20250012654" },
-    { zoneId: 2, name: "Metro Station Parking", distance: "0.4 mi", price: "$4/hr", available: 8 , uid: "20250012697"},
-    { zoneId: 3, name: "Park & Ride Hub", distance: "0.6 mi", price: "$3/hr", available: 25 , uid: "20250012662"},
-    ];
 
   return (
     <DashboardLayout>
@@ -314,25 +340,58 @@ useEffect(() => {
 
         {/* Results */}
         {showResults && (
-    <motion.div 
+        <motion.div 
         initial={{ y: "100%" }}
         animate={{ y: 0 }}
         transition={{ type: "spring", stiffness: 100, damping: 20 }}
         // Main container styles: Fixed width/position, elevated, rounded top
+        // Added 'relative' here to ensure the absolute-positioned loader covers it
         className="absolute bottom-0 w-full p-4 pt-0 bg-white shadow-2xl z-40 
-                   rounded-t-3xl max-h-[90vh] overflow-auto"
-    >
+                   rounded-t-3xl max-h-[90vh] overflow-auto" // 🚨 Added 'relative'
+        >
 
+        {/* 🚨 NEW: Full-Screen Loader Overlay */}
+        {bookingConfirmedLoader && (
+            <div className="absolute inset-0 z-50 flex flex-col items-center justify-center 
+                            bg-white bg-opacity-90 backdrop-blur-sm rounded-t-3xl">
+                
+                {/* Loader Spinner (You can replace this with a custom SVG or component) */}
+                <svg className="animate-spin h-10 w-10 text-indigo-600 mb-4" viewBox="0 0 24 24">
+                    <circle 
+                        className="opacity-25" 
+                        cx="12" 
+                        cy="12" 
+                        r="10" 
+                        stroke="currentColor" 
+                        strokeWidth="4"
+                        fill="none"
+                    />
+                    <path 
+                        className="opacity-75" 
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                </svg>
+
+                <p className="text-lg font-semibold text-gray-800">
+                    Fetching best slots for you...
+                </p>
+                <p className="text-sm text-gray-500 mt-1">
+                    Please wait, this may take a moment.
+                </p>
+            </div>
+        )}
+        
         {/* --- Header and Close Button --- */}
         <div className="sticky top-0 bg-white pt-4 pb-4 mb-4 z-50">
-            {/* Grab handle (for touch/visual cue) */}
             <div className="h-1 w-12 bg-gray-300 rounded-full mx-auto mb-4" /> 
-
-            {/* Close Button: Sleek, high-contrast, easy to tap */}
-            <div className="absolute top-4 right-4 cursor-pointer p-2 bg-gray-100 
-                            hover:bg-gray-200 transition-colors duration-200 rounded-full"
-                onClick={() => setShowResults(false)}>
-                <ArrowDown className="h-5 w-5 text-gray-700" />
+            <div className="absolute top-4 right-4 flex items-center gap-3">
+                <div className="cursor-pointer p-2 bg-gray-100 
+                             hover:bg-gray-200 transition-colors duration-200 rounded-full"
+                    onClick={() => setShowResults(false)}>
+                    {/* Assuming ArrowDown is imported */}
+                    <ArrowDown className="h-5 w-5 text-gray-700" /> 
+                </div>
             </div>
 
             {/* --- Trip Summary Stats --- */}
@@ -351,11 +410,31 @@ useEffect(() => {
                     </strong>
                 </div>
             </div>
+
+            <div className="flex justify-end items-center space-x-4 pr-4 mt-4">
+                    <span className="text-sm pl-2 font-medium text-gray-700">Priority parking</span>
+                    <button
+                        onClick={() => setIsPriority(!isPriority)} // Assuming setIsPriority is available
+                        className={`px-3 py-1 text-xs rounded-full transition-colors duration-300 font-semibold
+                            ${isPriority 
+                                ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
+                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                            }`}
+                    >
+                        {isPriority ? 'ON' : 'OFF'}
+                    </button>
+              </div>
         </div>
 
         {/* --- Parking Zones List --- */}
-        <div className="space-y-4">
-            <h3 className="text-xl font-bold text-gray-800 pt-2 mb-4">Available Parking Zones</h3>
+        <div className="space-y-2">
+            
+            <h3 className="text-xl font-bold text-gray-800 pl-2 mb-1">
+                AI-Filtered Zones
+            </h3>
+            <p className="text-sm text-gray-500 mb-4 pl-2">
+                Likelihood: <strong className="text-gray-700">{likelihood || "N/A"}</strong>
+            </p>
             
             {/* Use the actual state variable (nearbyParkingZones) */}
             {nearbyParkingZones && nearbyParkingZones.length > 0 ? (
@@ -363,8 +442,10 @@ useEffect(() => {
                     <Card 
                         // Use the unique _id for the key
                         key={zone._id} 
-                        className="p-4 md:p-6 border border-gray-100 rounded-xl cursor-pointer 
-                                   hover:shadow-lg transition-all duration-300"
+                        // 🚨 NEW: Dynamic color based on isPriority state
+                        className={`p-4 md:p-6 border rounded-xl cursor-pointer 
+                                    hover:shadow-lg transition-all duration-300 
+                                    ${isPriority ? 'border-amber-400 bg-amber-100' : 'border-gray-100 bg-white'}`}
                     >
                         <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0 pr-4">
@@ -387,7 +468,6 @@ useEffect(() => {
                                         <span className="ml-1">away</span>
                                     </div>
                                     
-                                  
                                 </div>
                                 
                                 {/* 4. CAPACITY and AVAILABLE SLOTS (Highlighted Row) */}
@@ -413,6 +493,7 @@ useEffect(() => {
                                 onClick={() => {
                                     setbookingRequestRaised(true);
                                     setchosenZone(zone);
+                                    // You would likely set bookingConfirmedLoader(true) here as well
                                 }}
                                 // Disable button if no slots are available
                                 disabled={zone.availableSlots <= 0}
