@@ -1,0 +1,9 @@
+fastapi==0.115.2
+uvicorn==0.31.1
+torch>=2.6.0
+numpy>=1.26.0
+pandas>=2.2.0
+scikit-learn>=1.5.0
+matplotlib>=3.8.0
+regex
+python-multipart
